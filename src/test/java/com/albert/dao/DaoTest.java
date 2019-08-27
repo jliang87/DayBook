@@ -12,6 +12,7 @@ import com.albert.utils.Page;
 public class DaoTest extends AppTest{
 	@Autowired  
 	CommonDao dao;
+
 	@Test
 	public void test(){
 		Page<Dictionary> page = new Page<Dictionary>(0, 1);

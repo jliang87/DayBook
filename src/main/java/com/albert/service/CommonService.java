@@ -20,6 +20,7 @@ public interface CommonService {
 	public<T extends EntityBase> List<T> findAll(Class<T> clazz ,String hql,List<Object> params) throws BookException;
 	
 	public <T extends EntityBase> void updateByHql(Class<T> clazz, String hql, List<Object> params) throws BookException;
+
 	public <T extends EntityBase> Page<T> findPage(Class<T> clazz,Page<T> page) throws BookException;
 	
 	public <T extends EntityBase> Double getSum(Class<T> clazz,String field,String hql,List<Object> params) throws BookException;

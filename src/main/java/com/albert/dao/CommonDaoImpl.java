@@ -1,62 +1,50 @@
 package com.albert.dao;
 
-import static org.springframework.data.jpa.repository.query.QueryUtils.toOrders;
-
-import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.EntityManager;
-import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
-import org.springframework.util.Assert;
 
 import com.albert.domain.EntityBase;
 import com.albert.utils.BookException;
 import com.albert.utils.Page;
+
 @Repository
 @SuppressWarnings("unchecked")
-public  class  CommonDaoImpl  implements CommonDao{
-
+public class CommonDaoImpl implements CommonDao{
 	@PersistenceContext
-	EntityManager em;
+	EntityManager entityManager;
 	
 	@Override
 	public <T extends EntityBase> void save(T t) throws BookException {
-		em.persist(t);
+		entityManager.persist(t);
 	}
 
 	@Override
 	public <T extends EntityBase> void update(T t) throws BookException {
-		em.merge(t);
-		em.flush();
+		entityManager.merge(t);
+		entityManager.flush();
 	}
 
 	@Override
 	public  <T extends EntityBase>  void deleteById(Class<T> clazz,Long id) throws BookException {
-		em.remove(findEntityById(clazz, id));
+		entityManager.remove(findEntityById(clazz, id));
 	}
 
 	@Override
 	public <T extends EntityBase> T findEntityById(Class<T> clazz, Long id) throws BookException {
-		return (T) em.find(clazz, id);
+		return (T) entityManager.find(clazz, id);
 	}
 
 	@Override
 	public <T extends EntityBase> T findEntity(Class<T> clazz ,String hql, List<Object> params) throws BookException {
 		try {
-			Query  query = em.createQuery(" FROM " + clazz.getName() + hql );
+			Query query = entityManager.createQuery(" FROM " + clazz.getName() + hql);
 			if(params!=null && params.size()>0){
 				for(int i = 1;i<=params.size();i++){
 					query.setParameter(i, params.get(i-1));
@@ -70,7 +58,7 @@ public  class  CommonDaoImpl  implements CommonDao{
 	}
 	@Override
 	public <T extends EntityBase> List<T> findAll(Class<T> clazz ,String hql, List<Object> params) throws BookException {
-		Query  query = em.createQuery(" FROM " + clazz.getName() + hql );
+		Query query = entityManager.createQuery(" FROM " + clazz.getName() + hql );
 		if(params!=null && params.size()>0){
 			for(int i = 1;i<=params.size();i++){
 				query.setParameter(i, params.get(i-1));
@@ -80,52 +68,59 @@ public  class  CommonDaoImpl  implements CommonDao{
 	}
 	@Override
 	public <T extends EntityBase> void delete(T t) throws BookException {
-		em.remove(t);
+		entityManager.remove(t);
 	}
 
 	@Override
 	public void flush() {
-		em.flush();
+		entityManager.flush();
 	}
 
 	@Override
 	public <T extends EntityBase> void update(Class<T> clazz, String hql, List<Object> params) throws BookException {
-		Query  query = em.createQuery(" update " + clazz.getName() + hql );
+		Query  query = entityManager.createQuery(" update " + clazz.getName() + hql );
 		if(params!=null && params.size()>0){
 			for(int i = 1;i<=params.size();i++){
 				query.setParameter(i, params.get(i-1));
 				if(i%30==0){
-					em.flush();em.clear();
+					entityManager.flush();
+					entityManager.clear();
 				}
 			}
 		}
 		query.executeUpdate();
 	}
 
-	public <T extends EntityBase> Page<T> findPage(Class<T> clazz,Page<T> page) {
-		Iterator<Order> it = page.getSort().iterator();
-		StringBuilder jpql = new StringBuilder(" from " + clazz.getName()+page.getRequestMap().getJpql().toString());
-		while(it.hasNext()){
-			Order o= it.next();
-			jpql.append(" order by "+o.getProperty()+" "+o.getDirection());
+	public <T extends EntityBase> Page<T> findPage(Class<T> clazz, Page<T> page) {
+		Sort sort = page.getSort();
+		StringBuilder jpqlStringBuilder = new StringBuilder(" FROM " + clazz.getName() + page.getRequestMap().getJpql().toString());
+
+		if (sort != null) {
+			for (Order order : page.getSort()) {
+				jpqlStringBuilder.append(" ORDER BY " + order.getProperty() + " " + order.getDirection());
+			}
 		}
-		Query query = em.createQuery(jpql.toString());
+
+		Query query = entityManager.createQuery(jpqlStringBuilder.toString());
 		query.setFirstResult(page.getPageNumber()*page.getPageSize());
 		query.setMaxResults(page.getPageSize());
 		List<Object> params = page.getRequestMap().getParams();
-		if(page.getRequestMap().getParams()!=null && params.size()>0){
-			for(int i = 1;i<=params.size();i++){
+
+		if (page.getRequestMap().getParams() != null && params.size() > 0){
+			for (int i = 1; i<=params.size(); i++){
 				query.setParameter(i, params.get(i-1));
 			}
 		}
+
 		List<T> results = query.getResultList();
 		page.setResults(results);
 		return page;
 	}
+
 	@Override
-	public <T extends EntityBase> Double getSum(Class<T> clazz,String field,String hql, List<Object> params) throws BookException {
-		Query  query = em.createQuery("select sum("+field+") FROM " + clazz.getName() + hql );
-		if(params!=null && params.size()>0){
+	public <T extends EntityBase> Double getSum(Class<T> clazz, String field, String hql, List<Object> params) throws BookException {
+		Query  query = entityManager.createQuery("select sum("+field+") FROM " + clazz.getName() + hql );
+		if (params != null && params.size() > 0) {
 			for(int i = 1;i<=params.size();i++){
 				query.setParameter(i, params.get(i-1));
 			}

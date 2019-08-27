@@ -36,24 +36,26 @@ public class RequestMap extends HashMap<String,Object> implements Map<String,Obj
 		}
 		this.request = request;
 		Map<?, ?> params = request.getParameterMap();
-		Iterator<?> it = params.entrySet().iterator();
+		Iterator<?> iterator = params.entrySet().iterator();
 		Map.Entry<?,?> entry;
 		String name = "";
 		String value = "";
-		LinkedHashMap<String,Object> returnMap = new LinkedHashMap<String,Object>(); 
-		while(it.hasNext()){
-			entry = (Map.Entry<?,?>) it.next();
+		LinkedHashMap<String,Object> returnMap = new LinkedHashMap<String,Object>();
+
+		while (iterator.hasNext()) {
+			entry = (Map.Entry<?,?>) iterator.next();
 			name = (String) entry.getKey();
 			Object valueObj = entry.getValue(); 
-			if(null == valueObj){ 
+			if (null == valueObj){
 				value = ""; 
-			}else if(valueObj instanceof String[]){ 
-				String[] values = (String[])valueObj;
-				for(int i=0;i<values.length;i++){ 
-					 value = values[i] ;
+			}
+			else if (valueObj instanceof String[]) {
+				String[] values = (String[]) valueObj;
+				for (String string : values) {
+					value += string;
 				}
-				value = value.substring(0, value.length()); 
-			}else{
+			}
+			else {
 				value = valueObj.toString(); 
 			}
 			returnMap.put(name, value); 
